@@ -1,5 +1,5 @@
 const settings = {
-  debug: true,
+  logLevel: 'debug',
   debugUser: 'phill',
   server: 'geas.de',
   port: '3333',

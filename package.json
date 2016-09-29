@@ -1,17 +1,17 @@
 {
-  "name": "mudbot",
-  "version": "1.0.0",
-  "description": "",
+  "name": "MudBot",
+  "version": "0.1.1",
+  "description": "A mud client chatbot",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node index.js"
+    "start": "node index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/PhillSlevin/mudbot.git"
   },
-  "author": "",
+  "author": "PhillSlevin",
   "license": "ISC",
   "bugs": {
     "url": "https://github.com/PhillSlevin/mudbot/issues"
@@ -19,6 +19,7 @@
   "homepage": "https://github.com/PhillSlevin/mudbot#readme",
   "dependencies": {
     "slackbots": "^0.5.2",
-    "telnet-stream": "0.0.4"
+    "telnet-stream": "0.0.4",
+    "winston": "^2.2.0"
   }
 }

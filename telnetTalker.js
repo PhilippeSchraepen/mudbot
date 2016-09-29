@@ -1,10 +1,10 @@
 'use strict';
-
-const { debug, server, port, messageTimeout } = require('./helpers/settings');
+const { server, port, messageTimeout, debugging } = require('./helpers/settings');
 const net = require('net');
 const EventEmitter = require('events').EventEmitter;
 const TelnetInput = require('telnet-stream').TelnetInput;
 const TelnetOutput = require('telnet-stream').TelnetOutput;
+const log = require('./logger')();
 
 class TelnetTalker extends EventEmitter{
   constructor(){
@@ -20,8 +20,8 @@ class TelnetTalker extends EventEmitter{
       .setKeepAlive(true)
       .setNoDelay(true)
       .setEncoding('utf8')
-    if (debug) this.socket.pipe(this.telnetInput).pipe(process.stdout);
     process.stdin.pipe(this.telnetOutput).pipe(this.socket);
+    log.debug('Connected to MUD ' + server + ':' + port);
   }
 
   speakToMUD(message){
