@@ -18,6 +18,8 @@
   },
   "homepage": "https://github.com/PhillSlevin/mudbot#readme",
   "dependencies": {
+    "botkit": "^0.2.2",
+    "lodash": "^4.16.2",
     "slackbots": "^0.5.2",
     "telnet-stream": "0.0.4",
     "winston": "^2.2.0"

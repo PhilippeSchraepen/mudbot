@@ -1,39 +1,43 @@
 'use strict';
-const { server, port, messageTimeout, debugging } = require('./helpers/settings');
+const { mudInfo, messageTimeout, debugging } = require('./helpers/settings');
 const net = require('net');
 const EventEmitter = require('events').EventEmitter;
 const TelnetInput = require('telnet-stream').TelnetInput;
 const TelnetOutput = require('telnet-stream').TelnetOutput;
 const log = require('./logger')();
+const _ = require('lodash');
 
 class TelnetTalker extends EventEmitter{
-  constructor(){
+  constructor(name){
     super();
+    this.mudName = name;
+    this.isConnected = false;
     this.telnetInput = new TelnetInput();
     this.telnetOutput = new TelnetOutput();
-    this.connect();
-    this.addEventListeners();
   }
 
   connect(){
-    this.socket = net.createConnection(port, server)
+    let currentMud = _.find(mudInfo, i => { return i.name === this.mudName; });
+    this.socket = net.createConnection(currentMud.port, currentMud.server)
       .setKeepAlive(true)
       .setNoDelay(true)
       .setEncoding('utf8')
     process.stdin.pipe(this.telnetOutput).pipe(this.socket);
-    log.debug('Connected to MUD ' + server + ':' + port);
+    this.isConnected = true;
+    log.debug('Connected to MUD ' + currentMud.server + ':' + currentMud.port);
   }
 
   speakToMUD(message){
     this.telnetOutput.write(message + '\n')
   }
 
-  addEventListeners(){
+  listen(){
     let buffer = '';
     this.socket.on('data', chunk => {
       buffer += chunk
       setTimeout( () => {
-        this.emit('receivedMessageFromMUD', buffer);
+        // send a message UP to mudbot somehow (maybe with event)
+        this.emit('messageFromServer', buffer);
       }, messageTimeout);
     });
   }

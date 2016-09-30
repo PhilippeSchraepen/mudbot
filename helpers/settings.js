@@ -1,13 +1,23 @@
 const settings = {
   logLevel: 'debug',
   debugUser: 'phill',
-  server: 'geas.de',
-  port: '3333',
   botSlackId: '<@U2G1GPJ8Y>',
   messageTimeout: 200, //ms
-  slack: {
+  mudInfo: [
+    {
+      name: 'Geas',
+      server: 'geas.de',
+      port: '3333'
+    },
+    {
+      name: 'Avalon',
+      server: 'avalon-rpg.com',
+      port: '23'
+    }
+  ],
+  slackConfig: {
     token: process.env.SLACKBOT_TOKEN,
-    name: 'mudbot'
+    debug: false
   }
 };
 
