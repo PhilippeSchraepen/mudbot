@@ -27,12 +27,24 @@ class MudBot extends EventEmitter{
 
     _.forEach(mudInfo, (mud) => {
       controller.hears([mud.name], 'direct_message', (bot, msg) => {
-        this._initiateMud(mud.name, bot, msg);
+        if(!telnetTalker){
+          this._initiateMud(mud.name, bot, msg);
+        }
       });
     });
 
+    controller.hears(['disconnect', 'stop'], 'direct_message', (bot, msg) => {
+      if(telnetTalker){
+        telnetTalker.disconnect();
+        telnetTalker = undefined;
+        bot.reply(msg, `Disconnected from ${this.mudName}`)
+      } else{
+        bot.reply(msg, "Please tell me what MUD to connect to first.")
+      }
+    });
+
     controller.on('direct_message', (bot, message) => {
-      if (telnetTalker && telnetTalker.isConnected) {
+      if (telnetTalker) {
         telnetTalker.speakToMUD(message.text);
       } else {
         bot.reply(message, "I didn't understand that. Please tell me what MUD to connect to first.");
@@ -45,8 +57,9 @@ class MudBot extends EventEmitter{
   }
 
   _initiateMud(mudName, bot, msg){
-    bot.reply(msg, 'Initiating ' + mudName + '...');
-    telnetTalker = new TelnetTalker(mudName);
+    this.mudName = mudName;
+    bot.reply(msg, 'Initiating ' + this.mudName + '...');
+    telnetTalker = new TelnetTalker(this.mudName);
     telnetTalker.connect();
     telnetTalker.listen();
     telnetTalker.on('messageFromServer', msgFromMud => {

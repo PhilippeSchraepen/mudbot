@@ -6,12 +6,12 @@ const TelnetInput = require('telnet-stream').TelnetInput;
 const TelnetOutput = require('telnet-stream').TelnetOutput;
 const log = require('./logger')();
 const _ = require('lodash');
+const ctrlx = '\x03'
 
 class TelnetTalker extends EventEmitter{
   constructor(name){
     super();
     this.mudName = name;
-    this.isConnected = false;
     this.telnetInput = new TelnetInput();
     this.telnetOutput = new TelnetOutput();
   }
@@ -23,8 +23,13 @@ class TelnetTalker extends EventEmitter{
       .setNoDelay(true)
       .setEncoding('utf8')
     process.stdin.pipe(this.telnetOutput).pipe(this.socket);
-    this.isConnected = true;
     log.debug('Connected to MUD ' + currentMud.server + ':' + currentMud.port);
+  }
+
+  disconnect(){
+    let currentMud = _.find(mudInfo, i => { return i.name === this.mudName; });
+    this.telnetOutput.write(ctrlx)
+    log.debug('Disconnected from MUD ' + currentMud.server + ':' + currentMud.port);
   }
 
   speakToMUD(message){
