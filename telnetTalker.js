@@ -7,6 +7,7 @@ const TelnetOutput = require('telnet-stream').TelnetOutput;
 const log = require('./logger')();
 const _ = require('lodash');
 const ctrlx = '\x03'
+const CR = '\n'
 
 class TelnetTalker extends EventEmitter{
   constructor(name){
@@ -33,7 +34,7 @@ class TelnetTalker extends EventEmitter{
   }
 
   speakToMUD(message){
-    this.telnetOutput.write(message + '\n')
+    this.telnetOutput.write(message + CR)
   }
 
   listen(){
