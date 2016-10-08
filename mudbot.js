@@ -63,7 +63,7 @@ class MudBot extends EventEmitter{
     telnetTalker.connect();
     telnetTalker.listen();
     telnetTalker.on('messageFromServer', msgFromMud => {
-			bot.reply(_wrapInCodeBlock(msgFromMud));
+			bot.reply(msg, this._wrapInCodeBlock(msgFromMud));
     });
   }
 
