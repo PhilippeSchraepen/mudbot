@@ -29,27 +29,74 @@ class MudBot extends EventEmitter{
     _.forEach(mudInfo, (mud) => {
       controller.hears([mud.name], 'direct_message', (bot, msg) => {
         if(!telnetTalker){
-          this._initiateMud(mud.name, bot, msg);
+          bot.startConversation(msg, (err, convo) => {
+            if(telnetTalker) {
+              convo.ask(`Do you want to disconnect from ${mud.name} first?`, [
+                {
+                  pattern: bot.utterances.yes,
+                  callback: (response, convo) => {
+                    this._disconnectMud()
+                    convo.next();
+                  }
+                },
+                {
+                  pattern: bot.utterances.no,
+                  callback: (response, convo) => {
+                    convo.say('Ok then silly, just keep playing.')
+                    convo.next()
+                  }
+                },
+                {
+                  default: true,
+                  callback: (response, convo) => {
+                    // repeat the question
+                    convo.repeat();
+                    convo.next();
+                  }
+                }
+              ]);
+            } else {
+              convo.ask(`Do you want to play ${mud.name}?`, [
+                {
+                  pattern: bot.utterances.yes,
+                  callback: (response, convo) => {
+                    this._initiateMud(mud.name, bot, msg);
+                    convo.next();
+                  }
+                },
+                {
+                  pattern: bot.utterances.no,
+                  callback: (response, convo) => {
+                    convo.say('Perhaps later.')
+                    convo.next()
+                  }
+                },
+                {
+                  default: true,
+                  callback: (response, convo) => {
+                    // repeat the question
+                    convo.repeat();
+                    convo.next();
+                  }
+                }
+              ]);
+            }
+          });
         }
       });
     });
+
 
     controller.hears(['[ENTER]'], (bot, message) => {
       if(telnetTalker){
         telnetTalker.speakToMud(CR);
       } else {
-        _notYetConnectedMessage(bot, msg)
+        this._notYetConnectedMessage(bot, msg)
       }
     });
 
-    controller.hears(['disconnect', 'stop'], 'direct_message', (bot, msg) => {
-      if(telnetTalker){
-        telnetTalker.disconnect();
-        telnetTalker = undefined;
-        bot.reply(msg, `Disconnected from ${this.mudName}`)
-      } else {
-        _notYetConnectedMessage(bot, msg)
-      }
+    controller.hears(['disconnect', 'stop', 'exit'], 'direct_message', (bot, msg) => {
+      this._disconnectMud(bot, msg);
     });
 
     controller.on('direct_message', (bot, message) => {
@@ -59,6 +106,17 @@ class MudBot extends EventEmitter{
         bot.reply(message, "I didn't understand that. Please tell me what MUD to connect to first.");
       }
     });
+
+  }
+
+  _disconnectMud(bot, msg){
+    if(telnetTalker){
+      telnetTalker.disconnect();
+      telnetTalker = undefined;
+      bot.reply(msg, `Disconnected from ${this.mudName}`)
+    } else {
+      this._notYetConnectedMessage(bot, msg)
+    }
   }
 
   _getMudList(){

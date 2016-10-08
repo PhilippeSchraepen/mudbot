@@ -42,7 +42,6 @@ class TelnetTalker extends EventEmitter{
     this.socket.on('data', chunk => {
       buffer += chunk
       setTimeout( () => {
-        // send a message UP to mudbot somehow (maybe with event)
         this.emit('messageFromServer', buffer);
       }, messageTimeout);
     });
