@@ -9,6 +9,7 @@ const bot = controller.spawn(slackConfig)
 const log = require('./logger')();
 let telnetTalker;
 const _ = require('lodash');
+const CR = '\n'
 class MudBot extends EventEmitter{
 
   constructor(){
@@ -22,7 +23,7 @@ class MudBot extends EventEmitter{
   listen(){
     controller.hears(['list', 'overview', 'available', 'muds'], 'direct_message', (bot, message) => {
       bot.reply(message, "Here's a list of all the available MUDs:");
-      bot.reply(message, '- ' + this._getMudList().join('\n - '));
+      bot.reply(message, this._getMudList());
     });
 
     _.forEach(mudInfo, (mud) => {
@@ -33,13 +34,21 @@ class MudBot extends EventEmitter{
       });
     });
 
+    controller.hears(['[ENTER]'], (bot, message) => {
+      if(telnetTalker){
+        telnetTalker.speakToMud(CR);
+      } else {
+        _notYetConnectedMessage(bot, msg)
+      }
+    });
+
     controller.hears(['disconnect', 'stop'], 'direct_message', (bot, msg) => {
       if(telnetTalker){
         telnetTalker.disconnect();
         telnetTalker = undefined;
         bot.reply(msg, `Disconnected from ${this.mudName}`)
-      } else{
-        bot.reply(msg, "Please tell me what MUD to connect to first.")
+      } else {
+        _notYetConnectedMessage(bot, msg)
       }
     });
 
@@ -53,7 +62,8 @@ class MudBot extends EventEmitter{
   }
 
   _getMudList(){
-    return mudInfo.map((mud) => { return mud.name; })
+    let muds = mudInfo.map((mud) => { return mud.name; });
+    return '- ' + muds.join('\n - ');
   }
 
   _initiateMud(mudName, bot, msg){
@@ -70,6 +80,10 @@ class MudBot extends EventEmitter{
 	_wrapInCodeBlock(message){
 		return '```' + message + '```'
 	}
+
+  _notYetConnectedMessage(bot, msg){
+    bot.reply(msg, "You're not connected to any MUD yet!")
+  }
 
 }
 
