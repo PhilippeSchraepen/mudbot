@@ -59,58 +59,65 @@ class MudBot extends EventEmitter{
                   }
                 }
               ]);
-            } else {
-              convo.ask(`Do you want to play ${mud.name}?`, [
-                {
-                  pattern: bot.utterances.yes,
-                  callback: (response, convo) => {
-                    this._initiateMud(mud.name, bot, msg);
-                    convo.next();
-                  }
-                },
-                {
-                  pattern: bot.utterances.no,
-                  callback: (response, convo) => {
-                    convo.say('Perhaps later.')
-                    convo.next()
-                  }
-                },
-                {
-                  default: true,
-                  callback: (response, convo) => {
-                    // repeat the question
-                    convo.repeat();
-                    convo.next();
-                  }
-                }
-              ]);
+              return
             }
+            convo.ask(`Do you want to play ${mud.name}?`, [
+              {
+                pattern: bot.utterances.yes,
+                callback: (response, convo) => {
+                  this._initiateMud(mud.name, bot, msg);
+                  convo.next();
+                }
+              },
+              {
+                pattern: bot.utterances.no,
+                callback: (response, convo) => {
+                  convo.say('Perhaps later.')
+                  convo.next()
+                }
+              },
+              {
+                default: true,
+                callback: (response, convo) => {
+                  // repeat the question
+                  convo.repeat();
+                  convo.next();
+                }
+              }
+            ]);
           });
         }
       });
     });
 
-
-    controller.hears(['[ENTER]'], (bot, message) => {
+    // Once a user is connected to a mud he can still control the mudbot by typing a capped command eg. [command]
+    // This way he has more freedom to type anything he likes in the MUD without interfering with the mudbot itself.
+    controller.hears(['\\[(.*)\\]'], 'direct_message', (bot,msg) => {
       if(telnetTalker){
-        telnetTalker.speakToMud(CR);
-      } else {
-        this._notYetConnectedMessage(bot, msg)
+        switch(msg.match[1].toLowerCase()){
+          case 'enter':
+            this._sendCarriageReturnToMud();
+            break;
+          case 'disconnect':
+            this._disconnectMud(bot, msg);
+            break;
+        }
+        return
       }
-    });
-
-    controller.hears(['disconnect', 'stop', 'exit'], 'direct_message', (bot, msg) => {
-      this._disconnectMud(bot, msg);
+      this._notYetConnectedMessage(bot, msg)
     });
 
     controller.on('direct_message', (bot, message) => {
       if (telnetTalker) {
         telnetTalker.speakToMUD(message.text);
-      } else {
-        bot.reply(message, "I didn't understand that. Please tell me what MUD to connect to first.");
+        return
       }
+      this._notYetConnectedMessage(bot, message)
     });
+  }
 
+  _sendCarriageReturnToMud(){
+    telnetTalker.speakToMUD(CR)
   }
 
   _disconnectMud(bot, msg){
@@ -118,9 +125,9 @@ class MudBot extends EventEmitter{
       telnetTalker.disconnect();
       telnetTalker = undefined;
       bot.reply(msg, `Disconnected from ${this.mudName}`)
-    } else {
-      this._notYetConnectedMessage(bot, msg)
+      return
     }
+    this._notYetConnectedMessage(bot, msg)
   }
 
   _getMudList(){
