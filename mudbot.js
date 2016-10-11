@@ -14,6 +14,10 @@ class MudBot extends EventEmitter{
 
   constructor(){
     super();
+    if(!slackConfig.token) {
+      log.error('Specify slackbot token in the environment');
+      process.exit(1);
+    }
   }
 
   connect(){
