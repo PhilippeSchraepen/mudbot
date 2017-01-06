@@ -1,7 +1,5 @@
 const settings = {
   logLevel: 'debug',
-  debugUser: 'phill',
-  botSlackId: '<@U2G1GPJ8Y>',
   messageTimeout: 200, //ms
   mudInfo: [
     {

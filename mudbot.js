@@ -1,6 +1,6 @@
 'use strict';
 
-const { mudInfo, debug, debugUser, botSlackId, slackConfig } = require('./helpers/settings');
+const { slackConfig, mudInfo, debug } = require('./helpers/settings');
 const EventEmitter = require('events').EventEmitter;
 const Bot = require('botkit');
 const TelnetTalker = require('./telnetTalker');
@@ -10,21 +10,13 @@ const log = require('./logger')();
 let telnetTalker;
 const _ = require('lodash');
 const CR = '\n'
-class MudBot extends EventEmitter{
+class MudBot {
 
-  constructor(){
-    super();
-    if(!slackConfig.token) {
-      log.error('Specify slackbot token in the environment');
-      process.exit(1);
-    }
+  connectToSlack(){
+    bot.startRTM( (err) => { if (err) throw new Error(`Could not connect to Slack: ${err}`) });
   }
 
-  connect(){
-    bot.startRTM( (err) => { if (err) throw new Error('Could not connect to Slack') });
-  }
-
-  listen(){
+  listenToUser(){
     controller.hears(['list', 'overview', 'available', 'muds'], 'direct_message', (bot, message) => {
       bot.reply(message, "Here's a list of all the available MUDs:");
       bot.reply(message, this._getMudList());
@@ -32,47 +24,20 @@ class MudBot extends EventEmitter{
 
     _.forEach(mudInfo, (mud) => {
       controller.hears([mud.name], 'direct_message', (bot, msg) => {
-        if(!telnetTalker){
-          bot.startConversation(msg, (err, convo) => {
-            if(telnetTalker) {
-              convo.ask(`Do you want to disconnect from ${mud.name} first?`, [
-                {
-                  pattern: bot.utterances.yes,
-                  callback: (response, convo) => {
-                    this._disconnectMud()
-                    convo.next();
-                  }
-                },
-                {
-                  pattern: bot.utterances.no,
-                  callback: (response, convo) => {
-                    convo.say('Ok then silly, just keep playing.')
-                    convo.next()
-                  }
-                },
-                {
-                  default: true,
-                  callback: (response, convo) => {
-                    // repeat the question
-                    convo.repeat();
-                    convo.next();
-                  }
-                }
-              ]);
-              return
-            }
-            convo.ask(`Do you want to play ${mud.name}?`, [
+        bot.startConversation(msg, (err, convo) => {
+          if(telnetTalker) {
+            convo.ask(`Do you want to disconnect from ${mud.name} first?`, [
               {
                 pattern: bot.utterances.yes,
                 callback: (response, convo) => {
-                  this._initiateMud(mud.name, bot, msg);
+                  this._disconnectMud(bot, msg)
                   convo.next();
                 }
               },
               {
                 pattern: bot.utterances.no,
                 callback: (response, convo) => {
-                  convo.say('Perhaps later.')
+                  convo.say('Ok then silly, just keep playing.')
                   convo.next()
                 }
               },
@@ -85,8 +50,33 @@ class MudBot extends EventEmitter{
                 }
               }
             ]);
-          });
-        }
+            return
+          }
+          convo.ask(`Do you want to play ${mud.name}?`, [
+            {
+              pattern: bot.utterances.yes,
+              callback: (response, convo) => {
+                this._initiateMud(mud.name, bot, msg);
+                convo.next();
+              }
+            },
+            {
+              pattern: bot.utterances.no,
+              callback: (response, convo) => {
+                convo.say('Perhaps later.')
+                convo.next()
+              }
+            },
+            {
+              default: true,
+              callback: (response, convo) => {
+                // repeat the question
+                convo.repeat();
+                convo.next();
+              }
+            }
+          ]);
+        });
       });
     });
 
@@ -137,7 +127,7 @@ class MudBot extends EventEmitter{
 
   _initiateMud(mudName, bot, msg){
     this.mudName = mudName;
-    bot.reply(msg, 'Initiating ' + this.mudName + '...');
+    bot.reply(msg, `Initiating ${this.mudName}...`);
     telnetTalker = new TelnetTalker(this.mudName);
     telnetTalker.connect();
     telnetTalker.listen();
@@ -153,7 +143,6 @@ class MudBot extends EventEmitter{
   _notYetConnectedMessage(bot, msg){
     bot.reply(msg, "You're not connected to any MUD yet!")
   }
-
 }
 
 module.exports = MudBot;

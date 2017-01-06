@@ -24,13 +24,13 @@ class TelnetTalker extends EventEmitter{
       .setNoDelay(true)
       .setEncoding('utf8')
     process.stdin.pipe(this.telnetOutput).pipe(this.socket);
-    log.debug('Connected to MUD ' + currentMud.server + ':' + currentMud.port);
+    log.debug(`Connected to MUD ${currentMud.server}:${currentMud.port}`);
   }
 
   disconnect(){
     let currentMud = _.find(mudInfo, i => { return i.name === this.mudName; });
     this.telnetOutput.write(ctrlx)
-    log.debug('Disconnected from MUD ' + currentMud.server + ':' + currentMud.port);
+    log.debug(`Disconnected from MUD ${currentMud.server}:${currentMud.port}`);
   }
 
   speakToMUD(message){
